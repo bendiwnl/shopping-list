@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #shopping-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #shopping-list li {
+            background: #f9f9f9;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #shopping-list li button {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #shopping-list li button:hover {
+            background: #cc0000;
+        }
+        #add-item-form {
+            margin-top: 20px;
+        }
+        #add-item-form input {
+            padding: 5px;
+            margin-right: 10px;
+        }
+        #add-item-form button {
+            padding: 5px 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #add-item-form button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shopping List</h1>
+    <ul id="shopping-list"></ul>
+
+    <form id="add-item-form">
+        <input type="text" id="item-name" placeholder="Item name" required>
+        <input type="number" id="item-quantity" placeholder="Quantity" required>
+        <button type="submit">Add Item</button>
+    </form>
+
+    <script>
+        // Fetch and display the shopping list
+        async function fetchShoppingList() {
+            const response = await fetch("http://127.0.0.1:8000/items/");
+            const items = await response.json();
+            const shoppingList = document.getElementById("shopping-list");
+            shoppingList.innerHTML = "";
+
+            items.forEach(item => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <span>${item.name} (Quantity: ${item.quantity})</span>
+                    <button onclick="deleteItem(${item.id})">Delete</button>
+                `;
+                shoppingList.appendChild(li);
+            });
+        }
+
+        // Add a new item to the shopping list
+        document.getElementById("add-item-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const name = document.getElementById("item-name").value;
+            const quantity = document.getElementById("item-quantity").value;
+
+            const response = await fetch("http://127.0.0.1:8000/items/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: Date.now(),  // Temporary ID (will be replaced by the database)
+                    name: name,
+                    quantity: quantity,
+                }),
+            });
+
+            if (response.ok) {
+                fetchShoppingList();
+                document.getElementById("item-name").value = "";
+                document.getElementById("item-quantity").value = "";
+            }
+        });
+
+        // Delete an item from the shopping list
+        async function deleteItem(itemId) {
+            const response = await fetch(`http://127.0.0.1:8000/items/${itemId}`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                fetchShoppingList();
+            }
+        }
+
+        // Load the shopping list when the page loads
+        fetchShoppingList();
+    </script>
+</body>
+</html>
